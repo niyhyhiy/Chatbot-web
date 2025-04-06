@@ -1,14 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 
 export default function Chatbot() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState([]);
+  const chatRef = useRef(null);
 
   const sendMessage = async () => {
     if (!input.trim()) return;
 
     const userMessage = { role: "user", content: input };
-    setMessages([...messages, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
 
     try {
@@ -22,7 +23,7 @@ export default function Chatbot() {
       const botMessage = { role: "assistant", content: data.reply };
       setMessages((prev) => [...prev, botMessage]);
     } catch (err) {
-      console.error("Error sending message:", err);
+      console.error("Error:", err);
     }
   };
 
@@ -30,32 +31,57 @@ export default function Chatbot() {
     if (e.key === "Enter") sendMessage();
   };
 
+  useEffect(() => {
+    chatRef.current?.scrollTo({
+      top: chatRef.current.scrollHeight,
+      behavior: "smooth",
+    });
+  }, [messages]);
+
   return (
-    <div className="max-w-xl mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">💬 GPT-4o Web Chatbot</h1>
-      <div className="border p-4 rounded-lg h-96 overflow-y-auto mb-4 bg-white">
-        {messages.map((msg, idx) => (
-          <div key={idx} className="mb-2">
-            <b>{msg.role === "user" ? "You" : "Bot"}:</b> {msg.content}
-          </div>
-        ))}
-      </div>
-      <div className="flex gap-2">
-        <input
-          type="text"
-          className="flex-1 border p-2 rounded"
-          placeholder="Type a message..."
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyPress}
-        />
-        <button
-          onClick={sendMessage}
-          className="bg-blue-500 text-white px-4 py-2 rounded"
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white flex items-center justify-center p-4">
+      <div className="w-full max-w-3xl bg-white shadow-xl rounded-2xl p-6 border border-gray-200">
+        <h1 className="text-3xl font-bold text-blue-700 mb-4 text-center">💬 GPT-4o Chatbot</h1>
+
+        <div
+          ref={chatRef}
+          className="h-96 overflow-y-auto rounded-lg p-4 bg-gray-50 border border-gray-300 space-y-4"
         >
-          Send
-        </button>
+          {messages.map((msg, idx) => (
+            <div
+              key={idx}
+              className={`max-w-[75%] px-4 py-3 rounded-lg shadow-sm ${
+                msg.role === "user"
+                  ? "ml-auto bg-blue-100 text-right"
+                  : "mr-auto bg-gray-200 text-left"
+              }`}
+            >
+              <p className="text-sm text-gray-600 font-medium mb-1">
+                {msg.role === "user" ? "You" : "Bot"}
+              </p>
+              <p className="text-gray-800">{msg.content}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="flex mt-4 gap-2">
+          <input
+            type="text"
+            placeholder="Type a message..."
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyPress}
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400"
+          />
+          <button
+            onClick={sendMessage}
+            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+          >
+            Send
+          </button>
+        </div>
       </div>
     </div>
   );
 }
+
